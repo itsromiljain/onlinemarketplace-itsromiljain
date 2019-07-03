@@ -1,9 +1,6 @@
 pragma solidity >=0.4.0 <0.7.0;
 
 contract OnlineMarket{
-    constructor() public{
-        admins[msg.sender] = true;
-    }
     
     //Owner
     address owner;
@@ -20,6 +17,9 @@ contract OnlineMarket{
     // Hold the Store Owners who are approved
     address[] private approvedStoreOwners;
 
+    event LogAddAdmin(address adminAddress);
+    event LogRemoveAdmin(address adminAddress);
+
     modifier onlyOwner(){
         require(msg.sender == owner);
         _;
@@ -29,16 +29,23 @@ contract OnlineMarket{
         require(admins[msg.sender] == true);
         _;
     }
+
+    constructor() public{
+        owner = msg.sender;
+        admins[msg.sender] = true;
+    }
     
     // Add admin
     function addAdmin(address adminAddress) public onlyAdmin{
         admins[adminAddress] = true;
+        emit LogAddAdmin(adminAddress);
     }
     
     // Remove Admin
     function removeAdmin(address adminAddress) public onlyOwner{
         require(admins[adminAddress] == true);
         admins[adminAddress] = false;
+        emit LogRemoveAdmin(adminAddress);
     }
     
     //Check if Admin

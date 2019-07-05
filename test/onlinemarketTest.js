@@ -9,8 +9,6 @@ contract("OnlineMarket", accounts => {
     const storeOwner1 = accounts[3];
     const storeOwner2 = accounts[4];
     const storeOwner3 = accounts[5];
-    const buyer1 = accounts[6];
-    const buyer2 = accounts[7];
 
     // Define beforeEach
     before(async() => {

@@ -41,7 +41,8 @@ contract StoreFront {
     //Mapping of Product by Store
     mapping(bytes32 => bytes32[]) productsByStore;
 
-    event LogCreateStore(bytes32 storeId);
+    event LogStoreCreated(bytes32 storeId);
+    event LogProductAdded(bytes32 productId);
     
     // Only approved Store Owner can take action
     modifier onlyApprovedStoreOwner() {
@@ -62,7 +63,7 @@ contract StoreFront {
         storesById[storeId] = store;
         storesByOwners[msg.sender].push(store.storeId);
         stores.push(store.storeId);
-        emit LogCreateStore(store.storeId);
+        emit LogStoreCreated(store.storeId);
         return store.storeId;
     }
     
@@ -138,6 +139,10 @@ contract StoreFront {
     
     function getProductIdByStore(bytes32 storeId, uint index) public view returns(bytes32){
         return productsByStore[storeId][index];
+    }
+
+    function getProductsCountByStore(bytes32 storeId) public view returns(uint){
+        return productsByStore[storeId].length;
     }
     
     function getProductById(bytes32 productId) public view returns (string memory, string memory, uint, uint, bytes32){

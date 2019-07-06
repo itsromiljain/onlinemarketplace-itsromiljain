@@ -11,11 +11,13 @@ contract OnlineMarket{
     //Mapping of StoreOwner approved or not by Admin
     mapping(address => bool) storeOwnerApprovalMapping;
     
-    // Hold the Store Owners who are reauested
+    // Hold the Store Owners who are requested
     address[] private requestedStoreOwners;
+    mapping(address => uint) requestedStoreOwnersIndex;
     
     // Hold the Store Owners who are approved
     address[] private approvedStoreOwners;
+    mapping(address => uint) approvedStoreOwnersIndex;
 
     event LogAddAdmin(address adminAddress);
     event LogRemoveAdmin(address adminAddress);
@@ -84,6 +86,7 @@ contract OnlineMarket{
         removeRequestedStoreOwner(storeOwner);
         // Add it to approved store owners
         approvedStoreOwners.push(storeOwner);
+        approvedStoreOwnersIndex[storeOwner] = approvedStoreOwners.length-1;
         emit LogApproveStoreOwners(storeOwner);
     }
     
@@ -93,7 +96,6 @@ contract OnlineMarket{
         storeOwnerApprovalMapping[storeOwner] = false;
         // remove it from approved store owners
         removeApprovedStoreOwner(storeOwner);
-        //requestedStoreOwners.push(storeOwner);
         emit LogRemoveStoreOwner(storeOwner);
         return true;
     }
@@ -106,6 +108,7 @@ contract OnlineMarket{
     function addStoreOwner() public returns(bool){
         require(storeOwnerApprovalMapping[msg.sender] == false);
         requestedStoreOwners.push(msg.sender);
+        requestedStoreOwnersIndex[msg.sender] = requestedStoreOwners.length-1;
         emit LogAddStoreOwner(msg.sender);
         return true;
     }
@@ -121,26 +124,18 @@ contract OnlineMarket{
     }
 
     function removeRequestedStoreOwner(address storeOwner) private onlyAdmin{
-        uint length = requestedStoreOwners.length;
-        for(uint i=0; i<length; i++) {
-			if (requestedStoreOwners[i] == storeOwner) {
-				requestedStoreOwners[i] = requestedStoreOwners[length-1]; 
-				delete requestedStoreOwners[length-1];
-				break;
-			}
-		}
-        requestedStoreOwners.length -= 1;
+        uint index = requestedStoreOwnersIndex[storeOwner];
+        if (requestedStoreOwners.length > 1) {
+            requestedStoreOwners[index] = requestedStoreOwners[requestedStoreOwners.length-1];
+        }
+        requestedStoreOwners.length--;
     }
     function removeApprovedStoreOwner(address storeOwner) private onlyAdmin{
-        uint length = approvedStoreOwners.length;
-        for(uint i=0; i<length; i++) {
-			if (approvedStoreOwners[i] == storeOwner) {
-				approvedStoreOwners[i] = approvedStoreOwners[length-1]; 
-				delete approvedStoreOwners[length-1];
-				break;
-			}
-		}
-        approvedStoreOwners.length -= 1;
+        uint index = approvedStoreOwnersIndex[storeOwner];
+        if (approvedStoreOwners.length > 1) {
+            approvedStoreOwners[index] = approvedStoreOwners[approvedStoreOwners.length-1];
+        }
+        approvedStoreOwners.length--;
     }
     
 }

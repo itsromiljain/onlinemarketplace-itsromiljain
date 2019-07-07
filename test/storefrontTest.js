@@ -80,10 +80,6 @@ contract ("StoreFront", accounts => {
                 assert.equal(storeCount, 3, "Store count should match");
             });
         
-            it("Stores can only be created by approved store owner otherwise revert", async() => {
-                 await catchRevert(storeFrontInstance.createStore(store2.storeName, {from:storeOwner2}));
-            });
-        
             it("Create Store by approved store owner and check Store Owner and Name", async() => {
                 await onlineMarketInstance.approveStoreOwners(storeOwner3, {from:owner});
                 const tx = await storeFrontInstance.createStore(store3.storeName, {from:storeOwner3});
@@ -132,6 +128,18 @@ contract ("StoreFront", accounts => {
         })
 
         describe("Exceptions()", async() =>{
+            it("Stores can only be created by approved store owner otherwise revert", async() => {
+                await catchRevert(storeFrontInstance.createStore(store2.storeName, {from:storeOwner2}));
+            });
+            it("Revert If store is removed by the owner who didn't create the store", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                await onlineMarketInstance.approveStoreOwners(storeOwner2, {from:owner});
+                const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+                const storeId = storeTx.logs[0].args.storeId; 
+                // Store Owner 2 tried to remove the product from the store which is created by Store Owner 1
+                await catchRevert(storeFrontInstance.removeStore(storeId,{from:storeOwner2}));
+            })
+
             it("Revert If Product is added to the store not created by the store owner", async() => {
                 await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
                 await onlineMarketInstance.approveStoreOwners(storeOwner2, {from:owner});
@@ -200,13 +208,36 @@ contract ("StoreFront", accounts => {
         })
 
         describe("RemoveStore()", async() =>{
-            
+            it("Remove Store created by approved store owner", async() => {
+            await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+            const storeTx1 = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+            const storeId1 = storeTx1.logs[0].args.storeId;
+            await storeFrontInstance.addProduct(storeId1,product1.productName, product1.description, 
+                product1.price, product1.quantity,{from:storeOwner1});
+            await storeFrontInstance.addProduct(storeId1,product2.productName, product2.description, 
+                product2.price, product2.quantity,{from:storeOwner1});
+            const storeTx2 = await storeFrontInstance.createStore(store2.storeName, {from:storeOwner1});
+            const storeId2 = storeTx2.logs[0].args.storeId;
+            await storeFrontInstance.addProduct(storeId2,product3.productName, product3.description, 
+                product3.price, product3.quantity,{from:storeOwner1});
+            await storeFrontInstance.removeStore(storeId1, {from:storeOwner1});
+            const storesCount = await storeFrontInstance.getStoreCountByOwner.call(storeOwner1);
+            //console.log("StoreCount from test->"+storesCount);
+            let finalCount = storesCount.toNumber();
+            for(let i=0; i<storesCount; i++) {
+			    let id = await storeFrontInstance.getStoreIdByOwner(i, {from:storeOwner1});
+			    if (id == 0x0000000000000000000000000000000000000000000000000000000000000000)
+				finalCount -= 1;
+		    }
+            assert.equal(finalCount, 1, "Store should be deleted");
+            })
         })
 
-        
-
         describe("BuyProducts()", async() =>{
-
+            it("Buyers should be allowed to purchase a product if they pay its price", async() => {})
+            it("Buyers should be allowedto purchase multiple products if they pay the total price", async() => {})
+            it("Buyers should get refund if they pay more than the total", async() => {})
+            it("StoreFront owners should be allowed to withdraw their storefront's balance", async() => {})
         })
 
     })

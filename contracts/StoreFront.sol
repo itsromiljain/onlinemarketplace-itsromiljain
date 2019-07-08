@@ -28,9 +28,10 @@ contract StoreFront {
     
     // Hold all the stores
     bytes32[] private  stores;
+    mapping(bytes32 => uint) storesIndex;
         
      // Mapping Stores with StoreId
-    mapping(bytes32 => Store) storesById;
+    mapping(bytes32 => Store) storeById;
     
     // Mapping Store Owners with StoreIds
     mapping(address =>  bytes32[]) storesByOwners;
@@ -42,7 +43,10 @@ contract StoreFront {
     mapping(bytes32 => bytes32[]) productsByStore;
 
     event LogStoreCreated(bytes32 storeId);
+    event LogStoreRemoved(bytes32 storeId);
     event LogProductAdded(bytes32 productId);
+    event LogProductRemovedByStore(bytes32 productId);
+    event LogBalanceWithdrawn(bytes32 storeId, uint storeBalance);
     
     // Only approved Store Owner can take action
     modifier onlyApprovedStoreOwner() {
@@ -52,7 +56,7 @@ contract StoreFront {
     
     // Store must be owned by Store Owner
     modifier onlyStoreOwner(bytes32 storeId) {
-        require(storesById[storeId].storeOwner == msg.sender);
+        require(storeById[storeId].storeOwner == msg.sender);
         _;
     }
 
@@ -60,9 +64,10 @@ contract StoreFront {
     function createStore(string memory storeName) public onlyApprovedStoreOwner returns(bytes32){
         bytes32 storeId = keccak256(abi.encodePacked(msg.sender, storeName, now));
         Store memory store = Store(storeId, storeName, msg.sender, 0);
-        storesById[storeId] = store;
+        storeById[storeId] = store;
         storesByOwners[msg.sender].push(store.storeId);
         stores.push(store.storeId);
+        storesIndex[store.storeId] = stores.length-1;
         emit LogStoreCreated(store.storeId);
         return store.storeId;
     }
@@ -83,20 +88,40 @@ contract StoreFront {
         //Remove all products in the store;
         removeProducts(storeId);
         //remove store from stores array
-        for (uint i=0; i<stores.length; i++) {
-            if(stores[i] == storeId){
-                delete stores[i];
-                break;
-            }
+        uint storeIndex = storesIndex[storeId];
+        if (stores.length > 1) {
+            stores[storeIndex] = stores[stores.length-1];
         }
+        stores.length--;
         //remove store by Owner
-        for (uint i=0; i<storesByOwners[msg.sender].length; i++) {
+        uint length = storesByOwners[msg.sender].length;
+        for (uint i=0; i<length; i++) {
             if(storesByOwners[msg.sender][i] == storeId){
-                delete storesByOwners[msg.sender][i];
+                storesByOwners[msg.sender][i] = storesByOwners[msg.sender][length-1];
+                delete storesByOwners[msg.sender][length-1];
+                storesByOwners[msg.sender].length--;
                 break;
             }
         }
-        delete storesById[storeId];
+        // Withdraw store balance and transfer to msg.sender
+        uint storeBalance = storeById[storeId].balance;
+		if (storeBalance > 0) {
+			msg.sender.transfer(storeBalance);
+			storeById[storeId].balance = 0;
+			emit LogBalanceWithdrawn(storeId, storeBalance);
+		}
+
+        //Delete Store By Id
+        delete storeById[storeId];
+        emit LogStoreRemoved(storeId);
+    }
+
+    function withdrawStoreBalance(bytes32 storeId) public payable onlyApprovedStoreOwner onlyStoreOwner(storeId) {
+        require(storeById[storeId].balance > 0);
+		uint storeBalance = storeById[storeId].balance;
+		msg.sender.transfer(storeBalance);
+		emit LogBalanceWithdrawn(storeId, storeBalance);
+		storeById[storeId].balance = 0;
     }
     
     function getStoreId(uint index) public view returns(bytes32){
@@ -104,12 +129,16 @@ contract StoreFront {
     } 
     
     function getStoreOwner(bytes32 storeId) public view onlyStoreOwner(storeId) returns(address){
-        return storesById[storeId].storeOwner;
+        return storeById[storeId].storeOwner;
     }
     
     function getStoreName(bytes32 storeId) public view onlyStoreOwner(storeId) returns(string memory){
-        return storesById[storeId].storeName;
+        return storeById[storeId].storeName;
     }
+
+    function getStoreBalance(bytes32 storeId) public view onlyApprovedStoreOwner onlyStoreOwner(storeId) returns (uint) {
+		return storeById[storeId].balance;
+	}
     
     function addProduct(bytes32 storeId, string memory productName, string memory description, uint price, uint quanity) 
     public onlyApprovedStoreOwner onlyStoreOwner(storeId) returns(bytes32){
@@ -130,7 +159,9 @@ contract StoreFront {
     }
     
     function removeProductByStore(bytes32 storeId, uint index) public onlyApprovedStoreOwner onlyStoreOwner(storeId){
+        emit LogProductRemovedByStore(productsByStore[storeId][index]);
         delete productsByStore[storeId][index];
+        
     }
     
     function getProductIdsByStore(bytes32 storeId) public view returns(bytes32[] memory){
@@ -153,7 +184,7 @@ contract StoreFront {
     function buyProduct(bytes32 storeId, bytes32 productId, uint quantity) public payable{
         //store owner can not buy its own productsById
         Product storage prdct = productsById[productId];
-        Store storage str = storesById[storeId];
+        Store storage str = storeById[storeId];
         //store owner can not buy its own products
         require(str.storeOwner != msg.sender);
         uint amount =  prdct.price*quantity;

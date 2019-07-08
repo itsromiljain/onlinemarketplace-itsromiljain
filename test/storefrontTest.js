@@ -12,6 +12,7 @@ contract ("StoreFront", accounts => {
     const storeOwner3 = accounts[5];
     const buyer1 = accounts[6];
     const buyer2 = accounts[7];
+    const buyer3 = accounts[8];
 
     let onlineMarketInstance;
     let storeFrontInstance;
@@ -52,6 +53,7 @@ contract ("StoreFront", accounts => {
         price:15,
         quantity:200
     }
+
     // Define beforeEach
     beforeEach(async() => {
         onlineMarketInstance = await OnlineMarket.new();
@@ -98,7 +100,7 @@ contract ("StoreFront", accounts => {
                 const storeId = storeTx.logs[0].args.storeId; 
                 const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
                     product1.price, product1.quantity,{from:storeOwner1}); 
-                returnProductId = prodTx.logs[0].args.productId;
+                const returnProductId = prodTx.logs[0].args.productId;
                 const extpectProductId = await storeFrontInstance.getProductIdByStore(storeId, 0, {from:storeOwner1});
                 assert.equal(returnProductId, extpectProductId, "Product should be added");
                 const prodDetail = await storeFrontInstance.getProductById(returnProductId, {from:storeOwner1});
@@ -234,10 +236,111 @@ contract ("StoreFront", accounts => {
         })
 
         describe("BuyProducts()", async() =>{
-            it("Buyers should be allowed to purchase a product if they pay its price", async() => {})
-            it("Buyers should be allowedto purchase multiple products if they pay the total price", async() => {})
-            it("Buyers should get refund if they pay more than the total", async() => {})
-            it("StoreFront owners should be allowed to withdraw their storefront's balance", async() => {})
+            it("Buyers should be allowed to purchase a product if they pay its price", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+                const storeId = storeTx.logs[0].args.storeId; 
+                const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                    product1.price, product1.quantity,{from:storeOwner1}); 
+                const productId = prodTx.logs[0].args.productId;
+                const prePurchaseAmount = await web3.eth.getBalance(buyer1);
+                //Buyer wants to buy 50 
+                const buyerQuantity = 50;
+                const buyerValue = (product1.price)*buyerQuantity;
+                const buyReceipt = await storeFrontInstance.buyProduct(storeId, productId, buyerQuantity, {from: buyer1, value: buyerValue});
+                const postPurchaseAmount = await web3.eth.getBalance(buyer1);
+                const buyTx = await web3.eth.getTransaction(buyReceipt.tx);
+                let buyTxCost = Number(buyTx.gasPrice) * buyReceipt.receipt.gasUsed;
+                assert.equal(postPurchaseAmount, (new BN(prePurchaseAmount).sub(new BN(buyTxCost)).sub(new BN(buyerValue))).toString(), "Value should be deducted from Buyer's account");
+                
+                const product = await storeFrontInstance.getProductById(productId);
+                assert.equal(product[3].toNumber(), product1.quantity-buyerQuantity, "Remaining Quantity of the product should match");       
+            })
+            it("Buyers should be allowed to purchase multiple products if they pay the total price", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+                const storeId = storeTx.logs[0].args.storeId; 
+                const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                    product1.price, product1.quantity,{from:storeOwner1}); 
+                const productId1 = prodTx.logs[0].args.productId;
+                const prodTx2 = await storeFrontInstance.addProduct(storeId,product2.productName, product2.description, 
+                    product2.price, product2.quantity,{from:storeOwner1});
+                const productId2 = prodTx2.logs[0].args.productId;
+                const prePurchaseAmount = await web3.eth.getBalance(buyer1);
+                //Buyer wants to buy 50 quantity of Product 1 and 60 quantity of Product 2
+                const buyerPrdct1Quantity = 50;
+                const buyerPrdct2Quantity = 60;
+                const buyerProd1Value = (product1.price)*buyerPrdct1Quantity;
+                const buyerProd2Value = (product2.price)*buyerPrdct2Quantity;
+
+                const buyReceipt1 = await storeFrontInstance.buyProduct(storeId, productId1, buyerPrdct1Quantity, {from: buyer1, value: buyerProd1Value});
+                const buyReceipt2 = await storeFrontInstance.buyProduct(storeId, productId2, buyerPrdct2Quantity, {from: buyer1, value: buyerProd2Value});
+
+                const postPurchaseAmount = await web3.eth.getBalance(buyer1);
+
+                const buyTx1 = await web3.eth.getTransaction(buyReceipt1.tx);
+                let buyTxCost1 = Number(buyTx1.gasPrice) * buyReceipt1.receipt.gasUsed;
+
+                const buyTx2 = await web3.eth.getTransaction(buyReceipt2.tx);
+                let buyTxCost2 = Number(buyTx2.gasPrice) * buyReceipt2.receipt.gasUsed;
+                assert.equal(postPurchaseAmount, (new BN(prePurchaseAmount).sub(new BN(buyTxCost1)).sub(new BN(buyTxCost2)).sub(new BN(buyerProd1Value)).sub(new BN(buyerProd2Value))).toString(), 
+                    "Total Value should be deducted from Buyer's account");
+
+                const returnProduct1 = await storeFrontInstance.getProductById(productId1);
+                assert.equal(returnProduct1[3].toNumber(), product1.quantity-buyerPrdct1Quantity, "Remaining Quantity of the product 1 should match");  
+
+                const returnProduct2 = await storeFrontInstance.getProductById(productId2);
+                assert.equal(returnProduct2[3].toNumber(), product2.quantity-buyerPrdct2Quantity, "Remaining Quantity of the product 2 should match");  
+
+            })
+            it("Buyers should get refund if they pay more than the total", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+                const storeId = storeTx.logs[0].args.storeId; 
+                const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                    product1.price, product1.quantity,{from:storeOwner1}); 
+                const productId = prodTx.logs[0].args.productId;
+                const prePurchaseAmount = await web3.eth.getBalance(buyer1);
+                //Buyer wants to buy 50 
+                const buyerQuantity = 50;
+                const buyerValue = 600;
+                const actualValue = (product1.price)*buyerQuantity;
+                const buyReceipt = await storeFrontInstance.buyProduct(storeId, productId, buyerQuantity, {from: buyer1, value: buyerValue});
+                const postPurchaseAmount = await web3.eth.getBalance(buyer1);
+                
+                const buyTx = await web3.eth.getTransaction(buyReceipt.tx);
+                let buyTxCost = Number(buyTx.gasPrice) * buyReceipt.receipt.gasUsed;
+                assert.equal(postPurchaseAmount, (new BN(prePurchaseAmount).sub(new BN(buyTxCost)).sub(new BN(actualValue))).toString(), "Buyer should get the refund amount");
+            })
+            it("StoreFront owners should be allowed to withdraw their storefront's balance", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+                const storeId = storeTx.logs[0].args.storeId; 
+                const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                    product1.price, product1.quantity,{from:storeOwner1}); 
+                const productId = prodTx.logs[0].args.productId;
+                await storeFrontInstance.buyProduct(storeId, productId, 20, {from: buyer1, value: (product1.price)*20});
+                await storeFrontInstance.buyProduct(storeId, productId, 10, {from: buyer2, value: (product1.price)*10});
+                await storeFrontInstance.buyProduct(storeId, productId, 5, {from: buyer3, value: (product1.price)*5});
+                const expectedBalance = (product1.price)*35;
+                const returnedBalance = await storeFrontInstance.getStoreBalance(storeId, {from:storeOwner1});
+                assert.equal(expectedBalance, returnedBalance, "Balance of the store should match"); 
+                await storeFrontInstance.withdrawStoreBalance(storeId, {from:storeOwner1});
+                const returnedStoreBalance = await storeFrontInstance.getStoreBalance(storeId, {from:storeOwner1});
+                assert.equal(returnedStoreBalance, 0, "Balance should be 0 after withdrawl");
+                /*const storeOwnerPreBalance = await web3.eth.getBalance(storeOwner1);
+                console.log(storeOwnerPreBalance);
+                const txReceipt = await storeFrontInstance.withdrawStoreBalance(storeId, {from:storeOwner1});
+                const storeOwnerPostBalance = await web3.eth.getBalance(buyer1);
+                console.log(storeOwnerPostBalance)
+                const tx = await web3.eth.getTransaction(txReceipt.tx);
+                let txCost = Number(tx.gasPrice) * txReceipt.receipt.gasUsed;
+                console.log(txCost)
+                console.log((storeOwnerPostBalance-storeOwnerPreBalance-txCost).toString());
+                console.log((new BN(storeOwnerPostBalance).sub(new BN(storeOwnerPreBalance).sub(new BN(txCost)))).toString());
+                //assert.equal(storeOwnerPostBalance, (new BN(storeOwnerPreBalance).sub(new BN(txCost))).toString(), "Available Balance should match");*/
+
+            })
         })
 
     })

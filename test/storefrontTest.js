@@ -67,7 +67,7 @@ contract ("StoreFront", accounts => {
                 await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
                 const tx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
                 const returnedStoreId = tx.logs[0].args.storeId;
-                const expectedStoreId = await storeFrontInstance.getStoreIdByOwner(0, {from:storeOwner1});
+                const expectedStoreId = await storeFrontInstance.getStoreIdByOwner(storeOwner1, 0, {from:storeOwner1});
                 assert.equal(returnedStoreId, expectedStoreId, "Store should be created");
                 const storeCount = await storeFrontInstance.getStoreCountByOwner(storeOwner1, {from:storeOwner1});
                 assert.equal(storeCount, 1, "Store count should match");
@@ -156,10 +156,24 @@ contract ("StoreFront", accounts => {
                 await onlineMarketInstance.approveStoreOwners(storeOwner2, {from:owner});
                 const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
                 const storeId = storeTx.logs[0].args.storeId; 
-                await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
                     product1.price, product1.quantity,{from:storeOwner1});
+                const productId = prodTx.logs[0].args.productId;
                 // Store Owner 2 tried to remove the product from the store which is created by Store Owner 1
-                await catchRevert(storeFrontInstance.removeProductByStore(storeId, 0, {from:storeOwner2}));
+                await catchRevert(storeFrontInstance.removeProductByStore(storeId, productId, {from:storeOwner2}));
+            })
+
+            it("Revert if other StoreFront owners try to withdraw some other storefront's balance", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                await onlineMarketInstance.approveStoreOwners(storeOwner2, {from:owner});
+                const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
+                const storeId = storeTx.logs[0].args.storeId; 
+                const prodTx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                    product1.price, product1.quantity,{from:storeOwner1}); 
+                const productId = prodTx.logs[0].args.productId;
+                await storeFrontInstance.buyProduct(storeId, productId, 20, {from: buyer1, value: (product1.price)*20});
+               
+                await catchRevert(storeFrontInstance.withdrawStoreBalance(storeId, {from:storeOwner2}));
             })
 
         })
@@ -169,20 +183,20 @@ contract ("StoreFront", accounts => {
                 await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
                 const storeTx = await storeFrontInstance.createStore(store1.storeName, {from:storeOwner1});
                 const storeId = storeTx.logs[0].args.storeId;
-                await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
+                const prod1Tx = await storeFrontInstance.addProduct(storeId,product1.productName, product1.description, 
                     product1.price, product1.quantity,{from:storeOwner1});
+                const productId1 = prod1Tx.logs[0].args.productId;
                 await storeFrontInstance.addProduct(storeId,product2.productName, product2.description, 
                     product2.price, product2.quantity,{from:storeOwner1});
-                await storeFrontInstance.removeProductByStore(storeId, 0, {from:storeOwner1});
+                await storeFrontInstance.removeProductByStore(storeId, productId1, {from:storeOwner1});
+                const prods = await storeFrontInstance.getProductIdsByStore(storeId, {from:storeOwner1});
                 const productCount = await storeFrontInstance.getProductsCountByStore.call(storeId);
-                //console.log(productCount.toNumber());
                 let finalCount = productCount.toNumber();
                 for(let i=0; i<productCount; i++) {
 			        let id = await storeFrontInstance.getProductIdByStore(storeId, i);
 			        if (id == 0x0000000000000000000000000000000000000000000000000000000000000000)
 				    finalCount -= 1;
 		        }
-                //console.log(finalCount);
                 assert.equal(finalCount, 1, "product count should match");
             })
             it("Remove products from a store created by approved store owner", async() => {
@@ -227,7 +241,7 @@ contract ("StoreFront", accounts => {
             //console.log("StoreCount from test->"+storesCount);
             let finalCount = storesCount.toNumber();
             for(let i=0; i<storesCount; i++) {
-			    let id = await storeFrontInstance.getStoreIdByOwner(i, {from:storeOwner1});
+			    let id = await storeFrontInstance.getStoreIdByOwner(storeOwner1, i, {from:storeOwner1});
 			    if (id == 0x0000000000000000000000000000000000000000000000000000000000000000)
 				finalCount -= 1;
 		    }

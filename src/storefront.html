@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Store Front</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <nav class="navbar navbar-default">
+      <h4 class="navbar-text"><a href="/" class="navbar-link">Home</a></h4>
+      <h4 class="navbar-text">Current Account: <span id="currentAddress">0x0</span></h4>
+    </nav>
+
+    <div class="container">
+
+      <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-push-2">
+          <h1 id="pageTitle" class="text-center">Store Front</h1>
+          <hr/>
+          <br/>
+        </div>
+      </div>
+
+      <div id="storeOwnerView" style="display: none;">
+        <div>
+          <h2>Add a Product</h2>
+            <form id="addProduct">
+              Product name: 
+              <input id="productName" type="text"> </br></br>
+              Product description: 
+              <input id="productDesc" type="text"> </br></br>
+              Price in ETH: 
+              <input id="productPrice" type="number" min="0" step="any"> </br> </br>
+              Quantity: 
+              <input id="productQty" type="number" min="0"> </br></br>
+              <input class="btn btn-success btn-create-storefront" type="submit" value="Add Product">
+            </form>
+        </div>
+      </div> <!-- end of storeOwnerView -->
+
+
+      <div id="defaultView">
+      </div>
+
+      <div>
+        <h2>Products For Sale</h2>
+        <div id="products">
+          <!-- rendered storefronts -->
+        </div>
+        <div id="productTemplate" style="display: none;">
+            <div class="panel panel-default col-xs-12 col-sm-3 col-sm-offset-1">
+              <div class="panel-body">
+                <h4 id=productName>Name</h3>
+                <p> <span id="productDesc"> Description </span></p>
+                <p>Price: <span id="productPrice"> 0 </span> Ξ</p>
+                <p>Quantity: <span id="productQuantity">0</span></p>
+                <span id="productID" style="display: none;"></span>
+                <br>
+
+                  <form id="buyProduct" style="display: none;">
+                    <h5>Purchase Product</h5> 
+                    Quantity: 
+                    <input id="purchaseQty" type="number" name="qty" min="1">
+                    <input type="hidden" id="productID" name="id" value="0x">
+                    <input type="hidden" id="purchasePrice" name="price" value=0>
+                    <input class="btn btn-success btn-purchase" type="submit" value="Buy">
+                  </form>
+
+                  <form class="updateProduct" style="display: none;">
+                    <h5>Update Product Price</h5> 
+                    New Price Ξ: 
+                    <input id="productPrice" type="number" name="price" min="0" step="any">
+                    <input type="hidden" id="productID" name="id" value="0x"> <br><br>
+                    <input class="btn btn-default" type="submit" value="Update">
+                  </form>
+
+                  <form class="removeProduct" style="display: none;">
+                    <h5>Remove Product</h5> 
+                    <input type="hidden" id="productID" name="id" value="0x"> 
+                    <input class="btn btn-danger" type="submit" value="Remove">
+                  </form>
+
+              </div>
+            </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/web3.min.js"></script>
+    <script src="js/truffle-contract.js"></script>
+    <script src="js/storefront.js"></script>
+  </body>
+</html>

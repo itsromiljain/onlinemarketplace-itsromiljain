@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Pete's Pet Shop</title>
+    <title>Marketplace</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -18,36 +18,124 @@
     <![endif]-->
   </head>
   <body>
+    <nav class="navbar navbar-default">
+      <h4 class="navbar-text">Current Account: <span id="currentAddress">0x0</span></h4>
+
+      <button class="btn navbar-btn btn-primary btn-request-store" type="button" data-addr="0x0" style="display: none;"> <b> Request to be a store owner </b></button>
+    </nav>
+
     <div class="container">
       <div class="row">
         <div class="col-xs-12 col-sm-8 col-sm-push-2">
-          <h1 class="text-center">Pete's Pet Shop</h1>
+          <h1 id="pageTitle" class="text-center">Welcome to the Marketplace</h1>
           <hr/>
           <br/>
         </div>
       </div>
 
-      <div id="petsRow" class="row">
-        <!-- PETS LOAD HERE -->
-      </div>
-    </div>
+      <div id="adminView" style="display: none;">
+        <div class="container">
+          <div>
+            <h2>Requested Store Owners</h2>
+            <div id="marketplace">
+              <!--- requests go here -->
+            </div>
+            <div id="requesterTemplate" style="display: none;">
+              <p>
+                <span class="requesterAddress"> 0x0 </span>
+                <button class="btn btn-success btn-approve-requester" type="button" data-addr="0x0"> Approve </button>
+              </p>
+            </div>
 
-    <div id="petTemplate" style="display: none;">
-      <div class="col-sm-6 col-md-4 col-lg-3">
-        <div class="panel panel-default panel-pet">
-          <div class="panel-heading">
-            <h3 class="panel-title">Scrappy</h3>
-          </div>
-          <div class="panel-body">
-            <img alt="140x140" data-src="holder.js/140x140" class="img-rounded img-center" style="width: 100%;" src="https://animalso.com/wp-content/uploads/2017/01/Golden-Retriever_6.jpg" data-holder-rendered="true">
-            <br/><br/>
-            <strong>Breed</strong>: <span class="pet-breed">Golden Retriever</span><br/>
-            <strong>Age</strong>: <span class="pet-age">3</span><br/>
-            <strong>Location</strong>: <span class="pet-location">Warren, MI</span><br/><br/>
-            <button class="btn btn-default btn-adopt" type="button" data-id="0">Adopt</button>
+            <div>
+              <h2>Remove a Store Owner</h2>
+              <p>Enter the address below</p>
+              <p>
+                <form id="removeStoreOwner">
+                  <input id="removeAddr" type="text">
+                  <input class="btn btn-danger btn-remove-owner" type="submit" value="Remove">
+                </form>
+              </p>
+            </div>
+
+            <div>
+              <h2>Add Admin</h2>
+                <p>Enter the address below</p>
+                <form id="addAdmin">
+                  <input id="adminAddrAdd" type="text">
+                  <input class="btn btn-success btn-add-admin" type="submit" value="Add">
+                </form>    
+            </div>
+
+            <div>
+              <h2>Remove Admin</h2>
+              <p>Enter the address below</p>
+                <form id="removeAdmin">
+                  <input id="adminAddrRem" type="text">
+                  <input class="btn btn-danger btn-remove-admin" type="submit" value="Remove">
+                </form>    
+            </div>
           </div>
         </div>
+      </div> <!-- end of adminView --> 
+
+      <div id="storeOwnerView" style="display: none;">
+        <div>
+            <div>
+              <h2>Create a storefront</h2>
+              <p>Enter the storefront name below</p>
+              <p>
+                <form id="createStorefront">
+                  <input id="storefrontName" type="text">
+                  <input class="btn btn-primary btn-create-storefront" type="submit" value="Create">
+                </form>
+              </p>
+            </div>
+
+            <div>
+              <h2>Your Storefronts</h2>
+              <div id="storefronts">
+                <!-- rendered storefronts -->
+              </div>
+              <div id="storefrontTemplate" style="display: none;">
+                <h4><a id="storefrontLink" href="/storefront.html?id=0x0">Name</a></h4>
+                <p> ID: <span id="storefrontId"> 0x0 </span></p>
+                <p>Balance: <span id="storefrontBalance"> 0x0 </span> Ξ</p>
+
+                <form class="wf">
+                  <input type="hidden" id="storefrontId" name="ID" value="0x">
+                  <input class="btn btn-primary btn-withdraw" type="button" value="Withdraw balance">
+                </form>
+              </div>
+            </div>
+
+            <div>
+              <h2>Delete a storefront</h2>
+              <p>Enter the storefront ID below</p>
+              <p>
+                <form id="deleteStorefront">
+                  <input id="storefrontId" type="text">
+                  <input class="btn btn-danger btn-delete-storefront" type="submit" value="Delete">
+                </form>
+              </p>
+            </div>
+
+        </div>
+      </div> <!-- end of storeOwnerView -->
+
+
+      <div id="defaultView" style="display: none;">
+        <h2>Active Stores</h2>
+        <div id="storefrontList">
+          <!--- requests go here -->
+        </div>
+        <div id="storefrontListItem" style="display: none;">
+          <p>
+            <h4><a id="storefrontListItemName" href="/storefront.html?id=0x0">Name</a></h4>
+          </p>
+        </div>
       </div>
+
     </div>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

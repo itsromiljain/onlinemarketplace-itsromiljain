@@ -45,8 +45,9 @@ contract StoreFront {
     event LogStoreCreated(bytes32 storeId);
     event LogStoreRemoved(bytes32 storeId);
     event LogProductAdded(bytes32 productId);
-    event LogProductRemovedByStore(bytes32 productId);
+    event LogProductRemoved (bytes32 productId,bytes32 storefrontId);
     event LogBalanceWithdrawn(bytes32 storeId, uint storeBalance);
+    event LogPriceUpdated (bytes32 productId,uint oldPrice,uint newPrice);
     
     // Only approved Store Owner can take action
     modifier onlyApprovedStoreOwner() {
@@ -76,10 +77,10 @@ contract StoreFront {
         return storesByOwners[storeOwne];
     }
     
-    function getStoreIdByOwner(uint index) public view returns(bytes32) {
-        return storesByOwners[msg.sender][index];
+    function getStoreIdByOwner(address storeOwner, uint index) public view returns(bytes32) {
+        return storesByOwners[storeOwner][index];
     }
-    
+
     function getStoreCountByOwner(address storeOwner) public view returns(uint){
         return storesByOwners[storeOwner].length;
     }
@@ -136,6 +137,10 @@ contract StoreFront {
         return storeById[storeId].storeName;
     }
 
+    function getTotalStoresCount() view public returns (uint) {
+		return stores.length;
+	}
+
     function getStoreBalance(bytes32 storeId) public view onlyApprovedStoreOwner onlyStoreOwner(storeId) returns (uint) {
 		return storeById[storeId].balance;
 	}
@@ -149,20 +154,22 @@ contract StoreFront {
         emit LogProductAdded(product.productId);
         return product.productId;
     }
-    
-    function removeProducts(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){
-        for (uint i=0; i< productsByStore[storeId].length; i++) {
-                bytes32 productId = productsByStore[storeId][i];
-                delete productsByStore[storeId][i];
-                delete productsById[productId];
-        }
-    }
-    
-    function removeProductByStore(bytes32 storeId, uint index) public onlyApprovedStoreOwner onlyStoreOwner(storeId){
-        emit LogProductRemovedByStore(productsByStore[storeId][index]);
-        delete productsByStore[storeId][index];
-        
-    }
+
+    function updateProductPrice(bytes32 storeId, bytes32 productId, uint newPrice) 
+    public onlyStoreOwner(storeId) {
+		Product storage product = productsById[productId];
+		uint oldPrice = product.price;
+		productsById[productId].price = newPrice;
+		emit LogPriceUpdated(productId, oldPrice, newPrice);
+	}
+
+    function getProductPrice(bytes32 productId) public view returns (uint) {
+		return productsById[productId].price;
+	}
+
+    function getProductName(bytes32 productId) public view returns (string memory) {
+		return productsById[productId].productName;
+	}
     
     function getProductIdsByStore(bytes32 storeId) public view returns(bytes32[] memory){
         return productsByStore[storeId];
@@ -179,6 +186,29 @@ contract StoreFront {
     function getProductById(bytes32 productId) public view returns (string memory, string memory, uint, uint, bytes32){
         return (productsById[productId].productName, productsById[productId].description, productsById[productId].price, 
         productsById[productId].quantity, productsById[productId].storeId);
+    }
+
+    function removeProducts(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){
+        for (uint i=0; i< productsByStore[storeId].length; i++) {
+                bytes32 productId = productsByStore[storeId][i];
+                delete productsByStore[storeId][i];
+                delete productsById[productId];
+        }
+    }
+    
+    function removeProductByStore(bytes32 storeId, bytes32 productId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){        
+        bytes32[] memory productIds = productsByStore[storeId]; 
+		uint productsCount = productIds.length; 
+        for(uint i=0; i<productsCount; i++) {
+			if (productIds[i] == productId) {
+				productIds[i] = productIds[productsCount-1];
+				delete productIds[productsCount-1];
+                productsByStore[storeId] = productIds;
+				delete productsById[productId];
+				emit LogProductRemoved(productId, storeId);
+				break;
+			}
+		}
     }
     
     function buyProduct(bytes32 storeId, bytes32 productId, uint quantity) public payable{

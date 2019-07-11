@@ -1,10 +1,10 @@
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity 0.5.8;
 
 import "./OnlineMarket.sol";
 
 contract StoreFront {
     
-    OnlineMarket onlineMarketInstance;
+    OnlineMarket public onlineMarketInstance;
     
     constructor(address onlineMarketContractAddress) public {
         onlineMarketInstance = OnlineMarket(onlineMarketContractAddress);
@@ -28,19 +28,19 @@ contract StoreFront {
     
     // Hold all the stores
     bytes32[] private  stores;
-    mapping(bytes32 => uint) storesIndex;
+    mapping(bytes32 => uint) private storesIndex;
         
      // Mapping Stores with StoreId
-    mapping(bytes32 => Store) storeById;
+    mapping(bytes32 => Store) private storeById;
     
     // Mapping Store Owners with StoreIds
-    mapping(address =>  bytes32[]) storesByOwners;
+    mapping(address =>  bytes32[]) private storesByOwners;
     
     // Mapping Products by Products Id
-    mapping(bytes32 => Product) productsById;
+    mapping(bytes32 => Product) private productsById;
     
     //Mapping of Product by Store
-    mapping(bytes32 => bytes32[]) productsByStore;
+    mapping(bytes32 => bytes32[]) private productsByStore;
 
     event LogStoreCreated(bytes32 storeId);
     event LogStoreRemoved(bytes32 storeId);

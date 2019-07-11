@@ -97,12 +97,12 @@ contract StoreFront {
         //remove store by Owner
         uint length = storesByOwners[msg.sender].length;
         for (uint i=0; i<length; i++) {
-            if(storesByOwners[msg.sender][i] == storeId){
+            if(storesByOwners[msg.sender][i] == storeId && i!=length-1){
                 storesByOwners[msg.sender][i] = storesByOwners[msg.sender][length-1];
-                delete storesByOwners[msg.sender][length-1];
-                storesByOwners[msg.sender].length--;
-                break;
             }
+            delete storesByOwners[msg.sender][length-1];
+            storesByOwners[msg.sender].length--;
+            break;
         }
         // Withdraw store balance and transfer to msg.sender
         uint storeBalance = storeById[storeId].balance;
@@ -129,11 +129,11 @@ contract StoreFront {
         return stores[index];
     } 
     
-    function getStoreOwner(bytes32 storeId) public view onlyStoreOwner(storeId) returns(address){
+    function getStoreOwner(bytes32 storeId) public view returns(address){
         return storeById[storeId].storeOwner;
     }
     
-    function getStoreName(bytes32 storeId) public view onlyStoreOwner(storeId) returns(string memory){
+    function getStoreName(bytes32 storeId) public view returns(string memory){
         return storeById[storeId].storeName;
     }
 

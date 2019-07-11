@@ -236,16 +236,19 @@ contract ("StoreFront", accounts => {
             const storeId2 = storeTx2.logs[0].args.storeId;
             await storeFrontInstance.addProduct(storeId2,product3.productName, product3.description, 
                 product3.price, product3.quantity,{from:storeOwner1});
-            await storeFrontInstance.removeStore(storeId1, {from:storeOwner1});
+            const storeTx3 = await storeFrontInstance.createStore(store3.storeName, {from:storeOwner1});
+            const storeId3 = storeTx3.logs[0].args.storeId;
+            const storesBeforeRemoval = await storeFrontInstance.getStores(storeOwner1, {from:storeOwner1});
+            await storeFrontInstance.removeStore(storeId3, {from:storeOwner1});
             const storesCount = await storeFrontInstance.getStoreCountByOwner.call(storeOwner1);
-            //console.log("StoreCount from test->"+storesCount);
             let finalCount = storesCount.toNumber();
             for(let i=0; i<storesCount; i++) {
-			    let id = await storeFrontInstance.getStoreIdByOwner(storeOwner1, i, {from:storeOwner1});
+                let id = await storeFrontInstance.getStoreIdByOwner(storeOwner1, i, {from:storeOwner1});
+                console.log("Store Id "+(i+1) + " -->" + id);
 			    if (id == 0x0000000000000000000000000000000000000000000000000000000000000000)
 				finalCount -= 1;
 		    }
-            assert.equal(finalCount, 1, "Store should be deleted");
+            assert.equal(finalCount, 2, "Store should be deleted");
             })
         })
 

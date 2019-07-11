@@ -118,7 +118,7 @@ App = {
 
       $('.btn-request-store').attr('data-addr', accounts[0]);
       $('.btn-request-store').attr('style', '');
-
+      let OnlineMarketInstance = await App.contracts.OnlineMarket.deployed();
 
       let StoreFrontInstance = await App.contracts.StoreFront.deployed();
       let length = await StoreFrontInstance.getTotalStoresCount();
@@ -128,13 +128,16 @@ App = {
       let storefrontTemplate = $('#storefrontListItem');
       for(let i=0; i<length; i++) {
         let storeId = await StoreFrontInstance.getStoreId(i);
-        let name = await StoreFrontInstance.getStoreName(storeId);
-        storefrontTemplate.find('#storefrontListItemName').text(name);
-        storefrontTemplate.find('#storefrontListItemName').attr('href', "/storefront.html?id=" + storeId);
-        storefrontListDiv.append(storefrontTemplate.html());
+        let storeOwner = await StoreFrontInstance.getStoreOwner(storeId);
+        let status = await OnlineMarketInstance.checkStoreOwnerStatus(storeOwner);
+        if(status){
+          let name = await StoreFrontInstance.getStoreName(storeId);
+          storefrontTemplate.find('#storefrontListItemName').text(name);
+          storefrontTemplate.find('#storefrontListItemName').attr('href', "/storefront.html?id=" + storeId);
+          storefrontListDiv.append(storefrontTemplate.html());
+        }
       }
     });
-
 
     $('.btn-request-store').attr('data-addr', "test");
     $(document).on('click', '.btn-request-store', App.addStoreOwner);
@@ -314,7 +317,7 @@ App = {
     var StoresFrontInstance;
 
     $('#deleteStorefront').submit(function( event ) {
-      storeId = $("input#storefrontId").val();
+      storeId = $("input#storeId").val();
       web3.eth.getAccounts(function(error, accounts) {
         if (error) {
           console.log(error);
@@ -354,13 +357,14 @@ App = {
   getStores: async function(length, account) {
     let stores = [];
     let StoresFrontInstance = await App.contracts.StoreFront.deployed();
-
+    let storesInjection = await StoresFrontInstance.getStores(account);
+    console.log(storesInjection);
     for(i=0; i<length; i++) {
       let sf = await StoresFrontInstance.getStoreIdByOwner(account, i);
       if (sf != 0x0000000000000000000000000000000000000000000000000000000000000000)
       stores.push(sf);
     }
-
+    console.log(stores);
     // Remove duplicates, if any
     let s = new Set(stores);
     let vals = s.values();

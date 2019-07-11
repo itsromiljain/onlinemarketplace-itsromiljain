@@ -1,4 +1,4 @@
-pragma solidity >=0.4.0 <0.7.0;
+pragma solidity 0.5.8;
 
 contract OnlineMarket{
     
@@ -6,18 +6,18 @@ contract OnlineMarket{
     address owner;
     
     // Admin mapping
-    mapping(address => bool) admins;
+    mapping(address => bool) private admins;
     
     //Mapping of StoreOwner approved or not by Admin
-    mapping(address => bool) storeOwnerApprovalMapping;
+    mapping(address => bool) private storeOwnerApprovalMapping;
     
     // Hold the Store Owners who are requested
     address[] private requestedStoreOwners;
-    mapping(address => uint) requestedStoreOwnersIndex;
+    mapping(address => uint) private requestedStoreOwnersIndex;
     
     // Hold the Store Owners who are approved
     address[] private approvedStoreOwners;
-    mapping(address => uint) approvedStoreOwnersIndex;
+    mapping(address => uint) private approvedStoreOwnersIndex;
 
     event LogAddAdmin(address adminAddress);
     event LogRemoveAdmin(address adminAddress);

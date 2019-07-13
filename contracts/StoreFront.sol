@@ -2,14 +2,31 @@ pragma solidity 0.5.8;
 
 import "./OnlineMarket.sol";
 
+/*
+* @title StoreFront 
+*
+* @dev This contract allows storeowners to manage their stores, add/remove products from store and buyers to buy the products
+* 
+*/
 contract StoreFront {
     
+    //OnlineMarket Instance
     OnlineMarket public onlineMarketInstance;
     
+
+    /** @dev Constructor to link the Marketplace contract
+	* @param onlineMarketContractAddress to link OnlineMarket contract
+	*/
     constructor(address onlineMarketContractAddress) public {
         onlineMarketInstance = OnlineMarket(onlineMarketContractAddress);
     }
     
+    /** @dev Struct that hold Stores data 
+	* @param storeId Store Id
+	* @param storeName Store name 
+	* @param storeOwner address of the storeOwner
+	* @param balance Store balance 
+	*/
     struct Store {
         bytes32 storeId;
         string storeName;
@@ -17,6 +34,14 @@ contract StoreFront {
         uint balance;
     }
     
+    /** @dev Struct that hold Products data 
+	* @param productId ProductId
+	* @param productName Product name 
+	* @param description description of the Product
+    * @param price price of the Product
+	* @param quantity quantity of the product in a store
+    * @param storeId Store Id
+	*/
     struct Product {
         bytes32 productId;
         string productName;
@@ -28,6 +53,7 @@ contract StoreFront {
     
     // Hold all the stores
     bytes32[] private  stores;
+    // Hold mapping of the stores with index
     mapping(bytes32 => uint) private storesIndex;
         
      // Mapping Stores with StoreId
@@ -42,6 +68,7 @@ contract StoreFront {
     //Mapping of Product by Store
     mapping(bytes32 => bytes32[]) private productsByStore;
 
+    //Events which are emitted at various points
     event LogStoreCreated(bytes32 storeId);
     event LogStoreRemoved(bytes32 storeId);
     event LogProductAdded(bytes32 productId);
@@ -49,19 +76,22 @@ contract StoreFront {
     event LogBalanceWithdrawn(bytes32 storeId, uint storeBalance);
     event LogPriceUpdated (bytes32 productId,uint oldPrice,uint newPrice);
     
-    // Only approved Store Owner can take action
+    // Modifier to to restrict function calls to only approved store owner
     modifier onlyApprovedStoreOwner() {
         require(onlineMarketInstance.checkStoreOwnerStatus(msg.sender) == true);
         _;
     }
     
-    // Store must be owned by Store Owner
+    // Modifier to to restrict function calls to the store owner who created the store
     modifier onlyStoreOwner(bytes32 storeId) {
         require(storeById[storeId].storeOwner == msg.sender);
         _;
     }
 
-    // Store can be created by approved Store Owners only
+    /** @dev Function is to create the store by approved store owner
+	* @param storeName Name of the store
+    * @return storeId
+	*/
     function createStore(string memory storeName) public onlyApprovedStoreOwner returns(bytes32){
         bytes32 storeId = keccak256(abi.encodePacked(msg.sender, storeName, now));
         Store memory store = Store(storeId, storeName, msg.sender, 0);
@@ -73,18 +103,34 @@ contract StoreFront {
         return store.storeId;
     }
     
+    /** @dev Function is to get all the stores
+	* @param store owner address
+    * @return storeIds - all the storeIds
+	*/
     function getStores(address storeOwne) public view onlyApprovedStoreOwner returns(bytes32[] memory){
         return storesByOwners[storeOwne];
     }
     
+    /** @dev Function is to get storeId by the store owner
+	* @param store owner address
+    * @param index
+    * @return storeId
+	*/
     function getStoreIdByOwner(address storeOwner, uint index) public view returns(bytes32) {
         return storesByOwners[storeOwner][index];
     }
 
+    /** @dev Function is to get stores count by the store owner
+	* @param store owner address
+    * @return no of stores
+	*/
     function getStoreCountByOwner(address storeOwner) public view returns(uint){
         return storesByOwners[storeOwner].length;
     }
     
+    /** @dev Function is to remove a store
+	* @param store Id
+	*/
     function removeStore(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId) {
         //Remove all products in the store;
         removeProducts(storeId);
@@ -119,6 +165,9 @@ contract StoreFront {
         emit LogStoreRemoved(storeId);
     }
 
+    /** @dev Function is to withdraw the store balance
+	* @param store Id
+	*/
     function withdrawStoreBalance(bytes32 storeId) public payable onlyApprovedStoreOwner onlyStoreOwner(storeId) {
         require(storeById[storeId].balance > 0);
 		uint storeBalance = storeById[storeId].balance;
@@ -127,26 +176,53 @@ contract StoreFront {
 		storeById[storeId].balance = 0;
     }
     
+    /** @dev Function is to get stores Id
+	* @param index
+    * @return storeId
+	*/
     function getStoreId(uint index) public view returns(bytes32){
         return stores[index];
     } 
     
+     /** @dev Function is to get store owner of the store
+	* @param storeId Id of the store
+    * @return storeOwner address
+	*/
     function getStoreOwner(bytes32 storeId) public view returns(address){
         return storeById[storeId].storeOwner;
     }
     
+    /** @dev Function is to get store name
+	* @param storeId Id of the store
+    * @return storeName
+	*/
     function getStoreName(bytes32 storeId) public view returns(string memory){
         return storeById[storeId].storeName;
     }
 
+     /** @dev Function is to get total store counts
+    * @return totalStoreCount
+	*/
     function getTotalStoresCount() view public returns (uint) {
 		return stores.length;
 	}
 
+    /** @dev Function is to get store balance
+    * @param storeId Id of the store
+    * @return storeBalance
+	*/
     function getStoreBalance(bytes32 storeId) public view onlyApprovedStoreOwner onlyStoreOwner(storeId) returns (uint) {
 		return storeById[storeId].balance;
 	}
     
+     /** @dev Function is to add a Product to the store
+    * @param storeId Id of the store
+    * @param productName Name of the product
+    * @param description Description of the product
+    * @param price price of the product
+    * @param quantity quantity of the product
+    * @return productId
+	*/
     function addProduct(bytes32 storeId, string memory productName, string memory description, uint price, uint quanity) 
     public onlyApprovedStoreOwner onlyStoreOwner(storeId) returns(bytes32){
         bytes32 productId = keccak256(abi.encodePacked(storeId, productName, now));
@@ -157,6 +233,11 @@ contract StoreFront {
         return product.productId;
     }
 
+     /** @dev Function is to update Product price of a store
+    * @param storeId Id of the store
+    * @param productId Id of the product
+    * @param newPrice new price of the product
+	*/
     function updateProductPrice(bytes32 storeId, bytes32 productId, uint newPrice) 
     public onlyStoreOwner(storeId) {
 		Product storage product = productsById[productId];
@@ -165,31 +246,64 @@ contract StoreFront {
 		emit LogPriceUpdated(productId, oldPrice, newPrice);
 	}
 
+    /** @dev Function is to get the price of the Product
+    * @param productId Id of the product
+    * @return price of the product
+	*/
     function getProductPrice(bytes32 productId) public view returns (uint) {
 		return productsById[productId].price;
 	}
 
+    /** @dev Function is to get the name of the Product
+    * @param productId Id of the product
+    * @return name of the product
+	*/
     function getProductName(bytes32 productId) public view returns (string memory) {
 		return productsById[productId].productName;
 	}
     
+    /** @dev Function is to get productIds in a store
+    * @param storeId Id of the store
+    * @return productIds in a store
+	*/
     function getProductIdsByStore(bytes32 storeId) public view returns(bytes32[] memory){
         return productsByStore[storeId];
     }
     
+    /** @dev Function is to get productId in a store
+    * @param storeId Id of the store
+    * @param index
+    * @return productId in a store
+	*/
     function getProductIdByStore(bytes32 storeId, uint index) public view returns(bytes32){
         return productsByStore[storeId][index];
     }
 
+    /** @dev Function is to get no of products in a store
+    * @param storeId Id of the store
+    * @return no of products in a store
+	*/
     function getProductsCountByStore(bytes32 storeId) public view returns(uint){
         return productsByStore[storeId].length;
     }
-    
+
+    /** @dev Function is to get product by Id
+    * @param productId Id of the product
+    * @return productId Id of the product
+    * @return productName Name of the product
+    * @return description Description of the product
+    * @param price price of the product
+    * @param quantity quantity of the product
+    * @param storeId Id of the store
+	*/
     function getProductById(bytes32 productId) public view returns (string memory, string memory, uint, uint, bytes32){
         return (productsById[productId].productName, productsById[productId].description, productsById[productId].price, 
         productsById[productId].quantity, productsById[productId].storeId);
     }
 
+    /** @dev Function is to remove products in a store.
+    * @param storeId Id of the store
+	*/
     function removeProducts(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){
         for (uint i=0; i< productsByStore[storeId].length; i++) {
                 bytes32 productId = productsByStore[storeId][i];
@@ -198,6 +312,10 @@ contract StoreFront {
         }
     }
     
+    /** @dev Function is to remove product in a store.
+    * @param storeId Id of the store
+    * @param productId Id of the Product
+	*/
     function removeProductByStore(bytes32 storeId, bytes32 productId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){        
         bytes32[] memory productIds = productsByStore[storeId]; 
 		uint productsCount = productIds.length; 
@@ -213,6 +331,11 @@ contract StoreFront {
 		}
     }
     
+    /** @dev Function is to buy the products by the buyer
+    * @param storeId Id of the store
+    * @param productId Id of the Product
+     * @param quantity quanities of the product to buy
+	*/
     function buyProduct(bytes32 storeId, bytes32 productId, uint quantity) public payable{
         //store owner can not buy its own productsById
         Product storage prdct = productsById[productId];

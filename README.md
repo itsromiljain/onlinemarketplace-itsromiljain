@@ -69,7 +69,7 @@ Each of the two contracts has `.sol` and `.js` tests, all located under `/test`.
 ## Other
 - [x] Use a library (via EthPM)
 	
-- [x] Smart Contract code should be commented according to the specs in [the documentation](https://solidity.readthedocs.io/en/v0.4.21/layout-of-source-files.html#comments)
+- [x] Smart Contract code should be commented according to the specs in [the documentation](https://solidity.readthedocs.io/en/v0.5.10/layout-of-source-files.html#comments)
 	- Check `OnlineMarket.sol` and `StoreFront.sol` 
 
 ## Stretch Requirement

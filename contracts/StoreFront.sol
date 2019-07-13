@@ -97,12 +97,14 @@ contract StoreFront {
         //remove store by Owner
         uint length = storesByOwners[msg.sender].length;
         for (uint i=0; i<length; i++) {
-            if(storesByOwners[msg.sender][i] == storeId && i!=length-1){
-                storesByOwners[msg.sender][i] = storesByOwners[msg.sender][length-1];
+            if(storesByOwners[msg.sender][i] == storeId){
+                if(i!=length-1){
+                    storesByOwners[msg.sender][i] = storesByOwners[msg.sender][length-1];
+                }
+                delete storesByOwners[msg.sender][length-1];
+                storesByOwners[msg.sender].length--;
+                break;
             }
-            delete storesByOwners[msg.sender][length-1];
-            storesByOwners[msg.sender].length--;
-            break;
         }
         // Withdraw store balance and transfer to msg.sender
         uint storeBalance = storeById[storeId].balance;

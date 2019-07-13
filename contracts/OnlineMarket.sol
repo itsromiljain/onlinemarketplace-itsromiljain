@@ -19,11 +19,11 @@ contract OnlineMarket{
     address[] private approvedStoreOwners;
     mapping(address => uint) private approvedStoreOwnersIndex;
 
-    event LogAddAdmin(address adminAddress);
-    event LogRemoveAdmin(address adminAddress);
-    event LogApproveStoreOwners(address storeOwner);
-    event LogRemoveStoreOwner(address storeOwner);
-    event LogAddStoreOwner(address storeOwner);
+    event LogAdminAdded(address adminAddress);
+    event LogAdminRemoved(address adminAddress);
+    event LogStoreOwnersApproved(address storeOwner);
+    event LogStoreOwnerRemoved(address storeOwner);
+    event LogStoreOwnerAdded(address storeOwner);
 
     modifier onlyOwner(){
         require(msg.sender == owner);
@@ -43,14 +43,14 @@ contract OnlineMarket{
     // Add admin
     function addAdmin(address adminAddress) public onlyAdmin{
         admins[adminAddress] = true;
-        emit LogAddAdmin(adminAddress);
+        emit LogAdminAdded(adminAddress);
     }
     
     // Remove Admin
     function removeAdmin(address adminAddress) public onlyOwner{
         require(admins[adminAddress] == true);
         admins[adminAddress] = false;
-        emit LogRemoveAdmin(adminAddress);
+        emit LogAdminRemoved(adminAddress);
     }
     
     //Check if Admin
@@ -87,7 +87,7 @@ contract OnlineMarket{
         // Add it to approved store owners
         approvedStoreOwners.push(storeOwner);
         approvedStoreOwnersIndex[storeOwner] = approvedStoreOwners.length-1;
-        emit LogApproveStoreOwners(storeOwner);
+        emit LogStoreOwnersApproved(storeOwner);
     }
     
     // Below function is to remove the approve storeOwnerAddress by Admin
@@ -96,7 +96,7 @@ contract OnlineMarket{
         storeOwnerApprovalMapping[storeOwner] = false;
         // remove it from approved store owners
         removeApprovedStoreOwner(storeOwner);
-        emit LogRemoveStoreOwner(storeOwner);
+        emit LogStoreOwnerRemoved(storeOwner);
         return true;
     }
     
@@ -109,7 +109,7 @@ contract OnlineMarket{
         require(storeOwnerApprovalMapping[msg.sender] == false);
         requestedStoreOwners.push(msg.sender);
         requestedStoreOwnersIndex[msg.sender] = requestedStoreOwners.length-1;
-        emit LogAddStoreOwner(msg.sender);
+        emit LogStoreOwnerAdded(msg.sender);
         return true;
     }
     

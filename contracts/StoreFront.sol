@@ -1,6 +1,6 @@
 pragma solidity 0.5.8;
 
-import "./OnlineMarket.sol";
+import './OnlineMarket.sol';
 import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
 import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
 

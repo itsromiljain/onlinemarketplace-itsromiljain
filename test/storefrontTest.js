@@ -359,5 +359,33 @@ contract ("StoreFront", accounts => {
             })
         })
 
+        describe("Pausable()", async() =>{
+            it("Owner is allowed to pause the contract", async() => {
+                await storeFrontInstance.pause({from:owner});
+                assert.equal(await storeFrontInstance.paused(), true, "Contract must be paused by the owner only");
+            })
+
+            it("Non Owner can't pause the contract", async() => {
+                 await catchRevert(storeFrontInstance.pause({from:storeOwner1}));
+            })
+
+            it("When contract is paused, No function can be called", async() => {
+                await onlineMarketInstance.approveStoreOwners(storeOwner1, {from:owner});
+                await storeFrontInstance.pause({from:owner});
+                await catchRevert(storeFrontInstance.createStore(store1.storeName, {from:storeOwner1}));
+            })
+
+            it("Only owner can unpause the contract", async() => {
+                await storeFrontInstance.pause({from:owner});
+                await storeFrontInstance.unpause({from:owner});
+                assert.equal(await storeFrontInstance.paused(), false, "Contract must be unpaused by the owener only");
+            })
+
+            it("Non owner can't unpause the contract", async() => {
+                await storeFrontInstance.pause({from:owner});
+                await catchRevert(storeFrontInstance.unpause({from:storeOwner1}));
+            })
+        })
+
     })
 });

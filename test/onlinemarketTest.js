@@ -118,4 +118,26 @@ contract("OnlineMarket", accounts => {
         assert.equal(await instance.getApprovedStoreOwnersLength.call(), 1, "1 store owners should be in approved list");
     });
 
+    it("Owner is allowed to pause the contract", async() => {
+        await instance.pause({from:owner});
+        assert.equal(await instance.paused(), true, "Contract must be paused by the owner only");
+    });
+
+     it("When contract is paused, No function can be called", async() => {
+        await catchRevert(instance.addAdmin(admin2, {from:admin1}));
+    });
+
+    it("Non Owner can't pause the contract", async() => {
+        await catchRevert(instance.pause({from:admin1}));
+    });
+
+    it("Only owner can unpause the contract", async() => {
+        await instance.unpause({from:owner});
+        assert.equal(await instance.paused(), false, "Contract must be unpaused by the owener only");
+    });
+
+    it("Non owner can't unpause the contract", async() => {
+        await instance.pause({from:owner});
+        await catchRevert(instance.unpause({from:admin1}));
+    });
 });

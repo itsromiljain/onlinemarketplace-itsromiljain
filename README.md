@@ -26,7 +26,7 @@ Once connected, we can use MetaMask to interact with the application. Now import
 ## Testing 
 To run these tests against a Ganache blockchain, In first terminal window run `ganache-cli` and then in other terminal,run `truffle test`. Both the commands should be run from the main directory of the project.
 
-Each of the two contracts has `.sol` and `.js` tests, all located under `/test`. All tests should pass. There are around 32 test cases written in Java Script and around <> in Solidity. For more explanations on tests, see `testcases.md`. 
+Each of the two contracts has `.sol` and `.js` tests, all located under `/test`. All tests should pass. There are around 42 test cases written in Java Script and around <> in Solidity. For more explanations on tests, see `testcases.md`. 
 
 *** 
 

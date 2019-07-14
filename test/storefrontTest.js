@@ -244,7 +244,6 @@ contract ("StoreFront", accounts => {
             let finalCount = storesCount.toNumber();
             for(let i=0; i<storesCount; i++) {
                 let id = await storeFrontInstance.getStoreIdByOwner(storeOwner1, i, {from:storeOwner1});
-                console.log("Store Id "+(i+1) + " -->" + id);
 			    if (id == 0x0000000000000000000000000000000000000000000000000000000000000000)
 				finalCount -= 1;
 		    }

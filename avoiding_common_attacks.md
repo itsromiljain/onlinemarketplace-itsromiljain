@@ -3,10 +3,10 @@ See: https://consensys.github.io/smart-contract-best-practices/recommendations/
 
 ## External Calls
 ### Use caution when making external calls
-The only external call made by a contract is from the `StoresFront` to `OnlineMarket` contract (in `onlyApprovedStoreOwner`). The address of the `OnlineMarket` contract is set by the owner (i.e. the address that deploys the contract) in the constructor of the `StoresFront`, and there is no way to change it. If a user trusts the addresses that have deployed the contracts, then the external call should be reasonably safe. 
+The only external call made by a contract is from the `StoresFront` to `OnlineMarket` contract (in `onlyApprovedStoreOwner`). The address of the `OnlineMarket` contract is set by the owner (i.e. the address that deploys the contract) in the constructor of the `StoresFront`, and there is no way to change it. The external call should be reasonably safe, If a user trusts the addresses that have deployed the contracts.
 
 ### Mark untrusted contracts¶
-Used the naming convetion accrodingly.
+Used the naming convention accordingly.
 
 ### Avoid state changes after external calls
 The only state change after an external call is in `createStore` in `StoreFront.sol`, as it was necessary to check in the `OnlineMarket` contract whether an address is marked as a `storeOwner` or not.
@@ -21,7 +21,7 @@ Not applicable.
 Not applicable. 
 
 ## Don't delegatecall to untrusted code & Don't assume contracts are created with zero balance
-This is not assumed anywhere, and withdrawals from `StoreFront.sol` are based on each storefront's `balance` value, which is stored separately from the total contract balance.
+This is not assumed anywhere. The withdrawals from `StoreFront.sol` are based on each store's `balance`, which is stored separately from the total contract balance.
 
 ## Remember that on-chain data is public
 Though all data is visible in the UI only store balances seems is somewhat sensitive data but that could be seen anywas once a store owner withdraws their balance. 
@@ -46,8 +46,8 @@ Multiple events are used to monitor contract activities. There are 5 events in `
 
 ## Differentiate functions and events
 Functions and events are differentiated in two ways:
-1. Events will start with an uppercase character and are Log prefixed(ex: LogAdminAdded) and functions with a lowercase one (ex: addAdmin)
-2. Events will use past tense verbs (ex: LogBalanceWithdrawn) and functions will use present tense verbs (ex: withdrawStorefrontBalance)
+1. Function starts with lower case ex: addAdmin and Events starts with an uppercase and have Log prefixed ex:LogAdminAdded
+2. Functions use present tense verbs ex: withdrawStorefrontBalance where as Events are using past tense verbs ex: LogBalanceWithdrawn
 
 ## Prefer newer Solidity constructs
 - `transfer` is used over `require(msg.sender.send())` (check `StoreFront.sol`)
@@ -57,6 +57,8 @@ Functions and events are differentiated in two ways:
 `tx.origin` is not used. 
 
 ## Timestamp Dependence
-Timestamps are only used to generate unique Ids for storefornts & products. There is no security implications. 
+Timestamps are only used to generate unique Ids for stores & products. There is no security implications. 
 
 ## Multiple Inheritance Caution
+Multiple Inheritance is implemented in the contracts. Contracts are extending `Ownable` & `Pausable` from OpenZeppelin library.
+They are inherited from Most General to Most Specific and the compiler will linearize the inheritance from right to left.

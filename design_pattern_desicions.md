@@ -19,11 +19,14 @@ Not used. There is nothing in the application that is expire/be deprecated.
 
 ## Mortal
 
+
 ## Pull over Push Payments (the Withdrawal Pattern)
 The `buyProduct` function in  `StoreFront.sol` is payable which doesn't transfer funds to the `storeOwner` directly but increments the `balance`. The store balance withdrawals can be done only via the `withdrawStoreBalance` function.
 
 ## Circuit Breaker
-As of now not used but will try to implement it.
+Implmented it using OpenZeppelin Pausable. Both the Contracts are extending the OpenZeppelin `Pausable` library.  
+Used `whenNotPaused` modifier to freeze the contract when required. Only the `owner` can `pause` and `unpause` the contracts. 
+When contracts are paused, No functions can be called.
 
 ## State Machine
 Not implemented. As there was no state to be maintained for the stores or products. If there is requirement for products to be purchased, shipped, recieved etc like SupplyChain then it could have been used.

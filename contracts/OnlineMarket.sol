@@ -1,15 +1,18 @@
 pragma solidity 0.5.8;
 
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
+
 /*
 * @title OnlineMarket 
 *
 * @dev This contract allows the addition and removal of admins and storefront owners 
 * 
 */
-contract OnlineMarket{
+contract OnlineMarket is Ownable, Pausable{
     
     //Owner
-    address owner;
+    //address owner;
     
     // Admin mapping
     mapping(address => bool) private admins;
@@ -33,12 +36,6 @@ contract OnlineMarket{
     event LogStoreOwnersApproved(address storeOwner);
     event LogStoreOwnerRemoved(address storeOwner);
     event LogStoreOwnerAdded(address storeOwner);
-
-    // Modifier to restrict function calls to only owner
-    modifier onlyOwner(){
-        require(msg.sender == owner);
-        _;
-    }
     
     // Modifier to restrict function calls to only admin
     modifier onlyAdmin(){
@@ -49,29 +46,28 @@ contract OnlineMarket{
     /** @dev The account that deploys contract is made admin.
 	*/
     constructor() public{
-        owner = msg.sender;
         admins[msg.sender] = true;
     }
     
    /** @dev Function is to add an Admin. Admins can add more admins.
-	* @param adminAddress to add as an admin 
+	* @param adminAddress Address of the Admin
 	*/ 
-    function addAdmin(address adminAddress) public onlyAdmin{
+    function addAdmin(address adminAddress) public onlyAdmin whenNotPaused{
         admins[adminAddress] = true;
         emit LogAdminAdded(adminAddress);
     }
     
     /** @dev Function is to remove an Admin. OnlyOwner can remove admins
-	* @param adminAddress to remove as an admin 
+	* @param adminAddress Address of the Admin
 	*/ 
-    function removeAdmin(address adminAddress) public onlyOwner{
+    function removeAdmin(address adminAddress) public onlyOwner whenNotPaused{
         require(admins[adminAddress] == true);
         admins[adminAddress] = false;
         emit LogAdminRemoved(adminAddress);
     }
     
     /** @dev Function is to check if an address is Admin or not.
-	* @param adminAddress to check it 
+	* @param adminAddress Address of the Admin
     * @return true if address is admin otherwise false
 	*/ 
     function checkAdmin(address adminAddress) public view returns(bool){
@@ -79,7 +75,7 @@ contract OnlineMarket{
     }
 
     /** @dev Function is to view a requested StoreOwner at a particular index
-	* @param requested index
+	* @param index requested store owner index
     * @return address of requestedStoreOwner at the requested index
 	*/ 
     function viewRequestedStoreOwner(uint index) public view onlyAdmin returns (address){
@@ -108,9 +104,9 @@ contract OnlineMarket{
     }
 
     /** @dev Function is to approve the Stores
-    * @param store owner address
+    * @param storeOwner address
 	*/
-    function approveStoreOwners(address storeOwner) public onlyAdmin{
+    function approveStoreOwners(address storeOwner) public onlyAdmin whenNotPaused{
         //Updated mapping with status of approval
         storeOwnerApprovalMapping[storeOwner] = true;
         // remove it from requested store owners
@@ -122,10 +118,10 @@ contract OnlineMarket{
     }
 
     /** @dev Function is to remove the approved storeOwner
-    * @param store owner address
+    * @param storeOwner address
     * @return true if store is removed otherwise false
 	*/
-    function removeStoreOwner(address storeOwner) public onlyAdmin returns(bool){
+    function removeStoreOwner(address storeOwner) public onlyAdmin whenNotPaused returns(bool){
         //Updated mapping with false
         storeOwnerApprovalMapping[storeOwner] = false;
         // remove it from approved store owners
@@ -135,7 +131,7 @@ contract OnlineMarket{
     }
     
     /** @dev Function is to check the status of the store owner
-    * @param store owner address
+    * @param storeOwner address
     * @return true if store is approved otherwise false
 	*/
     function checkStoreOwnerStatus(address storeOwner) public view returns(bool){
@@ -145,7 +141,7 @@ contract OnlineMarket{
     /** @dev Function is to add store owner
     * @return true if store is added otherwise false
 	*/
-    function addStoreOwner() public returns(bool){
+    function addStoreOwner() public whenNotPaused returns(bool){
         require(storeOwnerApprovalMapping[msg.sender] == false);
         requestedStoreOwners.push(msg.sender);
         requestedStoreOwnersIndex[msg.sender] = requestedStoreOwners.length-1;
@@ -168,10 +164,9 @@ contract OnlineMarket{
     }
 
     /** @dev Function is to remove the requestedStoreOwner
-    * @param store owner address
-    * @return true if store is removed  from the requestedStoreOwner otherwise false
+    * @param storeOwner address
 	*/
-    function removeRequestedStoreOwner(address storeOwner) private onlyAdmin{
+    function removeRequestedStoreOwner(address storeOwner) private onlyAdmin whenNotPaused {
         uint index = requestedStoreOwnersIndex[storeOwner];
         if (requestedStoreOwners.length > 1) {
             requestedStoreOwners[index] = requestedStoreOwners[requestedStoreOwners.length-1];
@@ -180,10 +175,9 @@ contract OnlineMarket{
     }
 
     /** @dev Function is to remove approvedStoreOwner
-    * @param store owner address
-    * @return true if store is removed  from the approvedStoreOwner otherwise false
+    * @param storeOwner address
 	*/
-    function removeApprovedStoreOwner(address storeOwner) private onlyAdmin{
+    function removeApprovedStoreOwner(address storeOwner) private onlyAdmin whenNotPaused{
         uint index = approvedStoreOwnersIndex[storeOwner];
         if (approvedStoreOwners.length > 1) {
             approvedStoreOwners[index] = approvedStoreOwners[approvedStoreOwners.length-1];

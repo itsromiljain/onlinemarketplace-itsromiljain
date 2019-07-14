@@ -1,6 +1,8 @@
 pragma solidity 0.5.8;
 
 import "./OnlineMarket.sol";
+import 'openzeppelin-solidity/contracts/ownership/Ownable.sol';
+import 'openzeppelin-solidity/contracts/lifecycle/Pausable.sol';
 
 /*
 * @title StoreFront 
@@ -8,7 +10,7 @@ import "./OnlineMarket.sol";
 * @dev This contract allows storeowners to manage their stores, add/remove products from store and buyers to buy the products
 * 
 */
-contract StoreFront {
+contract StoreFront is Ownable, Pausable{
     
     //OnlineMarket Instance
     OnlineMarket public onlineMarketInstance;
@@ -75,6 +77,7 @@ contract StoreFront {
     event LogProductRemoved (bytes32 productId,bytes32 storefrontId);
     event LogBalanceWithdrawn(bytes32 storeId, uint storeBalance);
     event LogPriceUpdated (bytes32 productId,uint oldPrice,uint newPrice);
+    event LogProductSold(bytes32 productId, bytes32 storeId, uint price, uint buyerQty, uint amount, address buyer, uint remainingQuantity);
     
     // Modifier to to restrict function calls to only approved store owner
     modifier onlyApprovedStoreOwner() {
@@ -92,7 +95,7 @@ contract StoreFront {
 	* @param storeName Name of the store
     * @return storeId
 	*/
-    function createStore(string memory storeName) public onlyApprovedStoreOwner returns(bytes32){
+    function createStore(string memory storeName) public onlyApprovedStoreOwner whenNotPaused returns(bytes32){
         bytes32 storeId = keccak256(abi.encodePacked(msg.sender, storeName, now));
         Store memory store = Store(storeId, storeName, msg.sender, 0);
         storeById[storeId] = store;
@@ -104,16 +107,16 @@ contract StoreFront {
     }
     
     /** @dev Function is to get all the stores
-	* @param store owner address
+	* @param storeOwner address
     * @return storeIds - all the storeIds
 	*/
-    function getStores(address storeOwne) public view onlyApprovedStoreOwner returns(bytes32[] memory){
-        return storesByOwners[storeOwne];
+    function getStores(address storeOwner) public view onlyApprovedStoreOwner returns(bytes32[] memory){
+        return storesByOwners[storeOwner];
     }
     
     /** @dev Function is to get storeId by the store owner
-	* @param store owner address
-    * @param index
+	* @param storeOwner address
+    * @param index Store owner index
     * @return storeId
 	*/
     function getStoreIdByOwner(address storeOwner, uint index) public view returns(bytes32) {
@@ -121,7 +124,7 @@ contract StoreFront {
     }
 
     /** @dev Function is to get stores count by the store owner
-	* @param store owner address
+	* @param storeOwner address
     * @return no of stores
 	*/
     function getStoreCountByOwner(address storeOwner) public view returns(uint){
@@ -129,9 +132,9 @@ contract StoreFront {
     }
     
     /** @dev Function is to remove a store
-	* @param store Id
+	* @param storeId Id of the store
 	*/
-    function removeStore(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId) {
+    function removeStore(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId) whenNotPaused {
         //Remove all products in the store;
         removeProducts(storeId);
         //remove store from stores array
@@ -166,9 +169,9 @@ contract StoreFront {
     }
 
     /** @dev Function is to withdraw the store balance
-	* @param store Id
+	* @param storeId Id of the store
 	*/
-    function withdrawStoreBalance(bytes32 storeId) public payable onlyApprovedStoreOwner onlyStoreOwner(storeId) {
+    function withdrawStoreBalance(bytes32 storeId) public payable onlyApprovedStoreOwner onlyStoreOwner(storeId) whenNotPaused{
         require(storeById[storeId].balance > 0);
 		uint storeBalance = storeById[storeId].balance;
 		msg.sender.transfer(storeBalance);
@@ -177,7 +180,7 @@ contract StoreFront {
     }
     
     /** @dev Function is to get stores Id
-	* @param index
+	* @param index storeId index
     * @return storeId
 	*/
     function getStoreId(uint index) public view returns(bytes32){
@@ -223,10 +226,10 @@ contract StoreFront {
     * @param quantity quantity of the product
     * @return productId
 	*/
-    function addProduct(bytes32 storeId, string memory productName, string memory description, uint price, uint quanity) 
-    public onlyApprovedStoreOwner onlyStoreOwner(storeId) returns(bytes32){
+    function addProduct(bytes32 storeId, string memory productName, string memory description, uint price, uint quantity) 
+    public onlyApprovedStoreOwner onlyStoreOwner(storeId) whenNotPaused returns(bytes32){
         bytes32 productId = keccak256(abi.encodePacked(storeId, productName, now));
-        Product memory product = Product(productId, productName, description, price, quanity, storeId);
+        Product memory product = Product(productId, productName, description, price, quantity, storeId);
         productsById[productId] = product;
         productsByStore[storeId].push(product.productId);
         emit LogProductAdded(product.productId);
@@ -239,7 +242,7 @@ contract StoreFront {
     * @param newPrice new price of the product
 	*/
     function updateProductPrice(bytes32 storeId, bytes32 productId, uint newPrice) 
-    public onlyStoreOwner(storeId) {
+    public onlyStoreOwner(storeId) whenNotPaused {
 		Product storage product = productsById[productId];
 		uint oldPrice = product.price;
 		productsById[productId].price = newPrice;
@@ -272,7 +275,7 @@ contract StoreFront {
     
     /** @dev Function is to get productId in a store
     * @param storeId Id of the store
-    * @param index
+    * @param index product Id index in a store
     * @return productId in a store
 	*/
     function getProductIdByStore(bytes32 storeId, uint index) public view returns(bytes32){
@@ -292,9 +295,9 @@ contract StoreFront {
     * @return productId Id of the product
     * @return productName Name of the product
     * @return description Description of the product
-    * @param price price of the product
-    * @param quantity quantity of the product
-    * @param storeId Id of the store
+    * @return price price of the product
+    * @return quantity quantity of the product
+    * @return storeId Id of the store
 	*/
     function getProductById(bytes32 productId) public view returns (string memory, string memory, uint, uint, bytes32){
         return (productsById[productId].productName, productsById[productId].description, productsById[productId].price, 
@@ -304,7 +307,7 @@ contract StoreFront {
     /** @dev Function is to remove products in a store.
     * @param storeId Id of the store
 	*/
-    function removeProducts(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){
+    function removeProducts(bytes32 storeId) public onlyApprovedStoreOwner onlyStoreOwner(storeId) whenNotPaused{
         for (uint i=0; i< productsByStore[storeId].length; i++) {
                 bytes32 productId = productsByStore[storeId][i];
                 delete productsByStore[storeId][i];
@@ -316,7 +319,7 @@ contract StoreFront {
     * @param storeId Id of the store
     * @param productId Id of the Product
 	*/
-    function removeProductByStore(bytes32 storeId, bytes32 productId) public onlyApprovedStoreOwner onlyStoreOwner(storeId){        
+    function removeProductByStore(bytes32 storeId, bytes32 productId) public onlyApprovedStoreOwner onlyStoreOwner(storeId) whenNotPaused{        
         bytes32[] memory productIds = productsByStore[storeId]; 
 		uint productsCount = productIds.length; 
         for(uint i=0; i<productsCount; i++) {
@@ -334,9 +337,10 @@ contract StoreFront {
     /** @dev Function is to buy the products by the buyer
     * @param storeId Id of the store
     * @param productId Id of the Product
-     * @param quantity quanities of the product to buy
+    * @param quantity quanities of the product to buy
+    * @return true if product is bought otherwise false
 	*/
-    function buyProduct(bytes32 storeId, bytes32 productId, uint quantity) public payable{
+    function buyProduct(bytes32 storeId, bytes32 productId, uint quantity) public payable whenNotPaused returns(bool){
         //store owner can not buy its own productsById
         Product storage prdct = productsById[productId];
         Store storage str = storeById[storeId];
@@ -353,6 +357,8 @@ contract StoreFront {
         //update product quantity & store balance
         prdct.quantity-=quantity;
         str.balance+=amount;
+        emit LogProductSold(productId, storeId, prdct.price, quantity, amount, msg.sender, prdct.quantity);
+		return true;
     }
       
 }

@@ -18,7 +18,7 @@ The following modifiers restrict access to certain functions:
 Not used. There is nothing in the application that is expire/be deprecated.
 
 ## Mortal
-
+Not Used. Though we can add selfDestruct to both the contracts.
 
 ## Pull over Push Payments (the Withdrawal Pattern)
 The `buyProduct` function in  `StoreFront.sol` is payable which doesn't transfer funds to the `storeOwner` directly but increments the `balance`. The store balance withdrawals can be done only via the `withdrawStoreBalance` function.

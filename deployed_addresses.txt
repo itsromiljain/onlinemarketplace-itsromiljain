@@ -1,4 +1,4 @@
-Where your contracts live (which testnet and address).
+Where my contracts live (which testnet and address).
 Rinkeby TestNet
 OnlineMarket 
 Tx Hash - 0xaeb48bb07102cfe4d0bbd20cdcfece85f00de07b0f5c9850676166c986f66727
@@ -10,4 +10,5 @@ Tx Hash - 0xe4e3dcf172fd2476ccc317319c9b919880add9a5d58f5ee20d567a69acf4ee8e
 Contract Address - 0xe4CEC0f2B87873c99F29CE3e437010025520Fc1F
 account -          0xd23bF34818704Be2F038923c122E416d09997f3b
 
-Students can verify their source code using etherscan for the appropriate testnet https://etherscan.io/verifyContract 
+Verify the source code using etherscan for the appropriate testnet https://etherscan.io/verifyContract 
+

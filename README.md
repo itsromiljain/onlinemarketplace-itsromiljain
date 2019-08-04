@@ -15,9 +15,9 @@ To run this project, you will need the following:
 
 ## Getting Stared 
 
-Clone this repository. After cloning, open 2 terminals and cd to the directory where repo was cloned. In the first terminal, run ganache-cli to start the test blockchain. Once local blockchain starts, copy the account details including the private keys and mnemonic phrase to clipboard.
+Clone this repository. After cloning, open 2 terminals and cd to the directory where repo was cloned. In the first terminal, run `ganache-cli` to start the test blockchain. Once local blockchain starts, copy the account details including the private keys and mnemonic phrase to clipboard.
 
-In the 2nd terminal, run truffle compile and then run truffle migrate to deplpoy the conracts on test blockchain. Once the contracts are deployed, run nmp run dev to start the UI. Once package is build, A window will automaticall open with localhost:3000. If not, Open the browser which has metamask extension and enter localhost:3000 as the URL.
+In the 2nd terminal, run `truffle compile` and then run `truffle migrate` to deplpoy the conracts on test blockchain. Once the contracts are deployed, run `npm install` and then `npm run dev` to start the UI. Once package is build, A window will automaticall open with localhost:3000. If not, Open the browser which has metamask extension and enter localhost:3000 as the URL.
 
 Now open the MetaMask extension, login to it. Once logged into the account, choose Custom RPC as the network and in the New RPC URL form, copy/paste the IP address from the which the ganache-cli terminal is listening on (it is likely 127.0.0.1:8545).
 
